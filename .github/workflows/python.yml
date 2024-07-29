@@ -54,4 +54,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          # You must explicitly install setuptools if you're disabling build isolation
+          pip install setuptools==71.1.0
+          # Now run pip install with the --no-build-isolation flag. It will use your current python environment rather
+          # than creating a new one.
           pip install --no-build-isolation -r requirements.txt
