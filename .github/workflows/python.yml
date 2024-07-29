@@ -7,6 +7,12 @@ on:
 
 jobs:
   broken:
+    # At the time of writing (2024-07-29 08:20 UTC) this job is broken, because cssbeautifier (listed in
+    # requirements.txt) will download its own copy of setuptools inside its isolated build environment. It doesn't
+    # specify the version of setuptools that it wants, so it will get the latest (42.0.0).
+    #
+    # However, cssbeautifier relies on the module `setuptools.command.test`, and that was [removed in setuptools
+    # 42.0.0](https://setuptools.pypa.io/en/stable/history.html#v72-0-0), so the installation of cssbeautifier fails.
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -23,6 +29,10 @@ jobs:
           pip install -r requirements.txt
 
   fixed-with-env:
+    # This job fixes the problem by declaring a PIP_CONSTRAINT environment variable, which refers to
+    # pip-constraints.txt. That file includes the constraint `setuptools<42`.
+    #
+    # See https://pip.pypa.io/en/stable/user_guide/#constraints-files
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -41,6 +51,11 @@ jobs:
           pip install -r requirements.txt
 
   fixed-with-arg:
+    # This job fixes the problem by passing the `--no-build-isolation` flag to `pip install`. That way, when
+    # cssbeautifier builds it uses the existing python environment rather than creating its own.
+    #
+    # With this option, you MUST ensure that `setuptools` is already installed before trying to install any package that
+    # requires it in its build step.
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -54,8 +69,5 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # You must explicitly install setuptools if you're disabling build isolation
           pip install setuptools==71.1.0
-          # Now run pip install with the --no-build-isolation flag. It will use your current python environment rather
-          # than creating a new one.
           pip install --no-build-isolation -r requirements.txt
